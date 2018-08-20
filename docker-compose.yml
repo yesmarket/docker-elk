@@ -27,6 +27,8 @@ services:
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
       - "5000:5000"
+      - "5043:5043"
+      - "12201:12201"
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -47,6 +49,22 @@ services:
       - elk
     depends_on:
       - elasticsearch
+
+  logstashtest:
+    build:
+      context: test/
+    ports:
+      - "5045:5045"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://localhost:12201"
+        gelf-compression-type: "gzip"
+        gelf-compression-level: "1"
+    networks:
+      - elk
+    depends_on:
+      - logstash
 
 networks:
 
