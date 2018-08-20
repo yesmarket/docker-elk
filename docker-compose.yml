@@ -10,8 +10,8 @@ services:
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "9200:9200/tcp"
+      - "9300:9300/tcp"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -26,9 +26,9 @@ services:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
-      - "5000:5000"
-      - "5043:5043"
-      - "12201:12201"
+      - "5000:5000/tcp"
+      - "5043:5043/tcp"
+      - "12201:12201/udp"
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -44,7 +44,7 @@ services:
     volumes:
       - ./kibana/config/:/usr/share/kibana/config:ro
     ports:
-      - "5601:5601"
+      - "5601:5601/tcp"
     networks:
       - elk
     depends_on:
@@ -54,7 +54,7 @@ services:
     build:
       context: test/
     ports:
-      - "5045:5045"
+      - "5045:5045/tcp"
     logging:
       driver: gelf
       options:
