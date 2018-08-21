@@ -36,6 +36,20 @@ services:
     depends_on:
       - elasticsearch
 
+  redis:
+    build:
+      context: redis/
+      args:
+        REDIS_VERSION: $REDIS_VERSION
+    volumes:
+      - ./redis/config/:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "6379:6379/tcp"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
   kibana:
     build:
       context: kibana/
@@ -64,7 +78,9 @@ services:
     networks:
       - elk
     depends_on:
+      - elasticsearch
       - logstash
+      - redis
 
 networks:
 
