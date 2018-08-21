@@ -6,6 +6,8 @@ LABEL description="LogstashTest"
 
 FROM microsoft/dotnet:2.1-sdk AS build
 COPY . ./
+ENV http_proxy='proxy.adelaide.certegy.com:8082'
+ENV https_proxy='proxy.adelaide.certegy.com:8082'
 WORKDIR LogstashTest
 RUN dotnet build -c Debug -o /app
 
