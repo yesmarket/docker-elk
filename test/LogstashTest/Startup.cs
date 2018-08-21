@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prometheus;
 
 namespace LogstashTest
 {
@@ -35,6 +36,7 @@ namespace LogstashTest
 
             app.UseHttpsRedirection();
             app.UseMvc();
+            app.UseMetricServer();
         }
     }
 }
