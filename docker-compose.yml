@@ -22,6 +22,8 @@ services:
       context: logstash/
       args:
         ELK_VERSION: $ELK_VERSION
+        HTTP_PROXY: $HTTP_PROXY
+        HTTPS_PROXY: $HTTPS_PROXY
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
@@ -36,19 +38,17 @@ services:
     depends_on:
       - elasticsearch
 
-  redis:
-    build:
-      context: redis/
-      args:
-        REDIS_VERSION: $REDIS_VERSION
-    volumes:
-      - ./redis/config/:/usr/local/etc/redis/redis.conf:ro
-    ports:
-      - "6379:6379/tcp"
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
+  # redis:
+  #   build:
+  #     context: redis/
+  #     args:
+  #       REDIS_VERSION: $REDIS_VERSION
+  #   volumes:
+  #     - ./redis/config/:/usr/local/etc/redis/redis.conf:ro
+  #   ports:
+  #     - "6379:6379/tcp"
+  #   networks:
+  #     - elk
 
   kibana:
     build:
@@ -67,6 +67,9 @@ services:
   logstashtest:
     build:
       context: test/
+      args:
+        HTTP_PROXY: $HTTP_PROXY
+        HTTPS_PROXY: $HTTPS_PROXY
     ports:
       - "5045:5045/tcp"
     logging:
@@ -77,10 +80,22 @@ services:
         gelf-compression-level: "1"
     networks:
       - elk
+    # depends_on:
+    #   - elasticsearch
+    #   - logstash
+    #   - redis
+
+  prometheus:
+    build:
+      context: prometheus/
+      args:
+        PROMETHEUS_VERSION: $PROMETHEUS_VERSION
+    ports:
+      - "9090:9090/tcp"
+    networks:
+      - elk
     depends_on:
-      - elasticsearch
-      - logstash
-      - redis
+      - logstashtest
 
 networks:
 

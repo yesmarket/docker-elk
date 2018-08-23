@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+  external_labels:
+      monitor: 'test'
+
+scrape_configs:
+
+  - job_name: 'logstashtest'
+    metrics_path: /metrics/
+    static_configs:
+      - targets: ['localhost:5045']
+
+  - job_name: 'docker-managers'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['host.docker.internal:50501']
+
+  - job_name: 'docker-workers'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['host.docker.internal:50501']
