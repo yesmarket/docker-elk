@@ -1,36 +1,38 @@
-version: '2'
+version: '3.5'
 
 services:
 
   elasticsearch:
-    build:
-      context: elasticsearch/
-      args:
-        ELK_VERSION: $ELK_VERSION
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.2
+    deploy:
+      placement:
+        constraints:
+          - node.role==worker
+          - node.platform.os==linux
     volumes:
-      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - "//c/git/docker-elk/elasticsearch/config/elasticsearch.yml /usr/share/elasticsearch/config/elasticsearch.yml"
     ports:
-      - "9200:9200/tcp"
-      - "9300:9300/tcp"
+      - 9200:9200
+      - 9300:9300
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
       - elk
 
   logstash:
-    build:
-      context: logstash/
-      args:
-        ELK_VERSION: $ELK_VERSION
-        HTTP_PROXY: $HTTP_PROXY
-        HTTPS_PROXY: $HTTPS_PROXY
+    image: mylogstash
+    deploy:
+      placement:
+        constraints:
+          - node.role==worker
+          - node.platform.os==linux
     volumes:
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - "//c:/git/docker-elk/logstash/config/logstash.yml /usr/share/logstash/config/logstash.yml:ro"
+      - "//c:/git/docker-elk/logstash/pipeline /usr/share/logstash/pipeline:ro"
     ports:
-      - "5000:5000/tcp"
-      - "5043:5043/tcp"
-      - "12201:12201/udp"
+      - 5000:5000
+      - 5043:5043
+      - 12201:12201/udp
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -39,65 +41,80 @@ services:
       - elasticsearch
 
   # redis:
-  #   build:
-  #     context: redis/
-  #     args:
-  #       REDIS_VERSION: $REDIS_VERSION
+  #   image: redis
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.role==worker
+  #         - node.platform.os==linux
   #   volumes:
   #     - ./redis/config/:/usr/local/etc/redis/redis.conf:ro
-  #   ports:
-  #     - "6379:6379/tcp"
   #   networks:
   #     - elk
+  #   depends_on:
+  #     - logstash
+
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat:6.3.2
+  #   deploy:
+  #     mode: global
+  #     placement:
+  #       constraints:
+  #         - node.role==worker
+  #         - node.platform.os==linux
+  #   volumes:
+  #     - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml
+  #     - /var/lib/docker/containers:/usr/share/dockerlogs/data:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #     - elk
+  #   depends_on:
+  #     - redis
 
   kibana:
-    build:
-      context: kibana/
-      args:
-        ELK_VERSION: $ELK_VERSION
+    image: docker.elastic.co/kibana/kibana-oss:6.3.2
+    deploy:
+      placement:
+        constraints:
+          - node.role==worker
+          - node.platform.os==linux
     volumes:
-      - ./kibana/config/:/usr/share/kibana/config:ro
+      - "//c:/git/docker-elk/kibana/config/ /usr/share/kibana/config:ro"
     ports:
-      - "5601:5601/tcp"
+      - 5601:5601
     networks:
       - elk
     depends_on:
       - elasticsearch
 
   logstashtest:
-    build:
-      context: test/
-      args:
-        HTTP_PROXY: $HTTP_PROXY
-        HTTPS_PROXY: $HTTPS_PROXY
+    image: logstashtest
+    deploy:
+      placement:
+        constraints:
+          - node.role==worker
+          - node.platform.os==linux
     ports:
-      - "5045:5045/tcp"
+      - 5045:5045
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://localhost:12201"
-        gelf-compression-type: "gzip"
-        gelf-compression-level: "1"
-    networks:
-      - elk
-    # depends_on:
-    #   - elasticsearch
-    #   - logstash
-    #   - redis
-
-  prometheus:
-    build:
-      context: prometheus/
-      args:
-        PROMETHEUS_VERSION: $PROMETHEUS_VERSION
-    ports:
-      - "9090:9090/tcp"
+        gelf-address: "udp://logstash:12201"
     networks:
       - elk
     depends_on:
-      - logstashtest
+      - elasticsearch
+      - logstash
+      # - redis
+
+  # prometheus:
+  #   image: prom/prometheus:v2.3.1
+  #   ports:
+  #     - 9090:9090
+  #   networks:
+  #     - elk
+  #   depends_on:
+  #     - logstashtest
 
 networks:
-
   elk:
-    driver: bridge
